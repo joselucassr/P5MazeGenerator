@@ -2,10 +2,13 @@ let cols, rows;
 let w = 40;
 let grid = [];
 
+let current;
+
 function setup() {
   createCanvas(400, 400);
   cols = floor(width / w);
   rows = floor(height / w);
+  frameRate(5);
 
   for (let j = 0; j < rows; j += 1) {
     for (let i = 0; i < cols; i += 1) {
@@ -13,6 +16,8 @@ function setup() {
       grid.push(cell);
     }
   }
+
+  current = grid[0];
 }
 
 function draw() {
@@ -21,12 +26,49 @@ function draw() {
   for (let i = 0; i < grid.length; i += 1) {
     grid[i].show();
   }
+
+  current.visited = true;
+  let next = current.checkNeighbors();
+
+  if (next) {
+    next.visited = true;
+    current = next;
+  }
+}
+
+function index(i, j) {
+  if (i < 0 || j < 0 || i > cols - 1 || j > rows - 1) {
+    return -1;
+  }
+  return i + j * cols;
 }
 
 function Cell(i, j) {
   this.i = i;
   this.j = j;
   this.walls = [true, true, true, true];
+  this.visited = false;
+
+  this.checkNeighbors = function () {
+    let neighbors = [];
+
+    let top = grid[index(i, j - 1)];
+    let right = grid[index(i + 1, j)];
+    let bottom = grid[index(i, j + 1)];
+    let left = grid[index(i - 1, j)];
+
+    if (top && !top.visited) neighbors.push(top);
+    if (right && !right.visited) neighbors.push(right);
+    if (bottom && !bottom.visited) neighbors.push(bottom);
+    if (left && !left.visited) neighbors.push(left);
+
+    if (neighbors.length > 0) {
+      let r = floor(random(0, neighbors.length));
+      return neighbors[r];
+    } else {
+      return undefined;
+    }
+  };
 
   this.show = function () {
     let x = this.i * w;
@@ -38,7 +80,9 @@ function Cell(i, j) {
     if (this.walls[2]) line(x + w, y + w, x, y + w);
     if (this.walls[3]) line(x, y + w, x, y);
 
-    // noFill();
-    // rect(x, y, w);
+    if (this.visited) {
+      fill(255, 0, 255, 100);
+      rect(x, y, w);
+    }
   };
 }
